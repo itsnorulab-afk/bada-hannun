@@ -1,0 +1,17 @@
+{
+  "name": "바다한눈 — 무료 낚시 앱",
+  "short_name": "바다한눈",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#103749",
+  "theme_color": "#103749",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
