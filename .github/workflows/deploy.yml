@@ -18,6 +18,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch KHOA high-low tide forecasts
+        continue-on-error: true
+        env:
+          KHOA_API_KEY: ${{ secrets.KHOA_API_KEY }}
+        run: python3 scripts/fetch_khoa_tides.py
       - uses: actions/configure-pages@v5
         with:
           enablement: true
