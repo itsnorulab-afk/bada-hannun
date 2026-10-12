@@ -28,9 +28,9 @@ def pick(x,*names):
 def parse(obj,code):
     results=[];coords=None;station=None
     for item in visit(obj):
-        when=pick(item,"predcDt","predcDate","predDate","forecastDateTime","dateTime","predcTime")
-        level=pick(item,"predcVal","predcLevel","tideLevel","tideHgt","predVal")
-        extreme=pick(item,"hlCode","hLCode","highLow","extremeType","predcType")
+        when=pick(item,"predcDt","predcDate","predDate","forecastDateTime","dateTime","predcTime","predcYmdHm")
+        level=pick(item,"predcVal","predcLevel","tideLevel","tideHgt","predVal","tideHgt","tideHeight","predcHgt","predTide")
+        extreme=pick(item,"hlCode","hLCode","highLow","extremeType","predcType","tideType","hlFlag")
         lat=pick(item,"lat","latitude","obsvLat")
         lon=pick(item,"lon","lot","longitude","obsvLon")
         name=pick(item,"obsPostName","obsName","stationName","obsPostNm")
@@ -53,25 +53,27 @@ def main():
     if not KEY:raise RuntimeError("KHOA_API_KEY missing (only GitHub Actions secret is supported)")
     stations=[];failures=0
     # Scan official station identifiers; retain ONLY API-confirmed coordinates and readings.
-    for i in range(1,101):
+    for i in range(1,61):
         code="DT_%04d"%i
         entries=[];coords=None;name=None
         for offset in range(3):
+            if offset>0 and not entries:break
             day=today+datetime.timedelta(days=offset)
             try:
                 pos,n,events=parse(get(code,day),code)
                 if pos:coords=pos
                 if n:name=n
                 entries.extend(events)
-            except Exception:
+            except Exception as exc:
                 failures+=1
+                if failures<=3:print("KHOA request failed:",type(exc).__name__)
                 if offset==0:break
         if coords and entries:
             uniq={(e["date"],e["time"],e["kind"]):e for e in entries}
             stations.append({"code":code,"name":name or code,"lat":coords[0],"lon":coords[1],"events":list(uniq.values())})
         time.sleep(.05)
     result={"source":"KHOA public-data high-low tide forecast","generatedAt":datetime.datetime.now(datetime.timezone.utc).isoformat(),"reference":"chart datum (official forecast)","stations":stations}
-    if not stations:raise RuntimeError("No validated tide stations returned; do not publish fabricated cm")
+    if not stations:raise RuntimeError("No validated tide stations returned; API schema or obsCode needs verification")
     OUT.write_text(json.dumps(result,ensure_ascii=False,separators=(",",":")),encoding="utf-8")
     print("KHOA valid stations:",len(stations),"nonfatal requests:",failures)
 if __name__=="__main__": main()
