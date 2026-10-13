@@ -25,7 +25,7 @@ jobs:
         continue-on-error: true
         env:
           KHOA_API_KEY: ${{ secrets.KHOA_API_KEY }}
-        run: python3 scripts/fetch_khoa_tides.py
+        run: timeout 105s python3 scripts/fetch_khoa_tides.py
       - name: Publish safe KHOA status
         if: always()
         env:
@@ -48,6 +48,15 @@ jobs:
                   'checkedAt':datetime.datetime.now(datetime.timezone.utc).isoformat()}
           pathlib.Path('data/tides-status.json').write_text(json.dumps(status),encoding='utf-8')
           print('Tide publishing state:',status['state'],'stations:',count)
+          PY
+      - name: Generate deployed app build info
+        run: |
+          python3 - <<'PY'
+          import datetime,json,pathlib
+          version=pathlib.Path('VERSION').read_text().strip()
+          payload={'version':version,'deployedAt':datetime.datetime.now(datetime.timezone.utc).isoformat()}
+          pathlib.Path('build-info.json').write_text(json.dumps(payload))
+          print('Deploying app version:',version)
           PY
       - uses: actions/configure-pages@v5
         with:
